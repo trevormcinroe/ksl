@@ -28,7 +28,10 @@ Altering training schemes can be done by feeding additional args, such as:
 ```
 python train.py env=cheetah_run lr=2e-4
 ```
+For a full list of customizable args, see `./ksl/configs.yaml`.
 
+
+## Observing Runs
 Just as in the DrQ repo, `train.py` will produce the `runs` folder, where all the outputs are going to be stored including train/eval logs, tensorboard blobs, and evaluation episode videos. To launch tensorboard run
 ```
 tensorboard --logdir runs
