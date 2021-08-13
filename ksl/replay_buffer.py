@@ -18,7 +18,6 @@ class ReplayBuffer(object):
         self.aug_trans = nn.Sequential(
             nn.ReplicationPad2d(image_pad),
             kornia.augmentation.RandomCrop((obs_shape[-1], obs_shape[-1]))
-            # kornia.augmentation.RandomCrop((84, 84))
         )
 
         self.obses = np.empty((capacity, *obs_shape), dtype=np.uint8)
@@ -122,25 +121,6 @@ class ReplayBuffer(object):
         return obses, actions, obses_next, rewards
 
 
-# ORIGINAL
-# def random_crop(imgs, image_pad, out=84):
-#     """
-#         args:
-#         imgs: np.array shape (B,C,H,W)
-#         out: output size (e.g. 84)
-#         returns np.array
-#     """
-#     n, c, h, w = imgs.shape
-#
-#     crop_max = h - out + 1
-#     w1 = np.random.randint(0, crop_max, n)
-#     h1 = np.random.randint(0, crop_max, n)
-#     cropped = np.empty((n, c, out, out), dtype=imgs.dtype)
-#     for i, (img, w11, h11) in enumerate(zip(imgs, w1, h1)):
-#         img = np.pad(img, image_pad)[image_pad:-image_pad, :, :]
-#         cropped[i] = img[:, h11:h11 + out, w11:w11 + out]
-#     return cropped
-
 def random_crop(imgs, image_pad, out=84):
     """
         args:
@@ -157,6 +137,7 @@ def random_crop(imgs, image_pad, out=84):
         img = np.pad(img, image_pad, mode='constant')[image_pad:-image_pad, :, :]
         cropped[i] = img[:, h11:h11 + out, w11:w11 + out]
     return cropped
+
 
 def random_translate(imgs, size, return_random_idxs=False, h1s=None, w1s=None):
     n, c, h, w = imgs.shape
