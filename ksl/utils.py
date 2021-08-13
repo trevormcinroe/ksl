@@ -59,18 +59,6 @@ def tie_weights(src, trg):
     trg.bias = src.bias
 
 
-# def weight_init(m):
-#     """Custom weight init for Conv2D and Linear layers."""
-#     if isinstance(m, nn.Linear):
-#         nn.init.orthogonal_(m.weight.data)
-#         if hasattr(m.bias, 'data'):
-#             m.bias.data.fill_(0.0)
-#     elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-#         gain = nn.init.calculate_gain('relu')
-#         nn.init.orthogonal_(m.weight.data, gain)
-#         if hasattr(m.bias, 'data'):
-#             m.bias.data.fill_(0.0)
-
 def weight_init(m):
     """Custom weight init for Conv2D and Linear layers."""
     if isinstance(m, nn.Linear):
@@ -275,14 +263,3 @@ class ResultsPlotter:
         ax.set_xlabel('Environment Steps ($\\times 10^6%$)')
         ax.set_ylabel('Episode Return')
         ax.set_title(f'{info["env"]}')
-
-# a = ResultsPlotter('/media/trevor/mariadb/thesis')
-# info = {
-#     'env': 'Cheetah Run',
-#     'patterns': [['msl-drq-ch', 'pFalse', 'k3']],
-#     #                  ['msl-drq-ch', 'pFalse', 'k3'],
-#     #                  ['msl-drq-ch', 'pFalse', 'k1']],
-#     'agents': [['KSL[k=3]']]
-#
-# }
-# a.plot(info)

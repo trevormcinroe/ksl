@@ -247,7 +247,7 @@ class ProjectionHead(nn.Module):
             x = layer(x)
         return x
 
-class OSL(nn.Module):
+class ksl(nn.Module):
     def __init__(self, critic_online, critic_momentum, action_shape):
         super().__init__()
         self.encoder_online = critic_online.encoder
@@ -286,7 +286,7 @@ class DRQAgent:
     def __init__(self, obs_shape, action_shape, action_range, device,
                  encoder_cfg, critic_cfg, actor_cfg, discount,
                  init_temperature, lr, actor_update_frequency, critic_tau,
-                 critic_target_update_frequency, batch_size, osl_update_frequency, k):
+                 critic_target_update_frequency, batch_size, ksl_update_frequency, k):
         self.action_range = action_range
         self.device = device
         self.discount = discount
@@ -294,7 +294,7 @@ class DRQAgent:
         self.actor_update_frequency = actor_update_frequency
         self.critic_target_update_frequency = critic_target_update_frequency
         self.batch_size = batch_size
-        self.osl_update_frequency = osl_update_frequency
+        self.ksl_update_frequency = ksl_update_frequency
         self.k = k
 
         self.actor = hydra.utils.instantiate(actor_cfg).to(self.device)
@@ -312,7 +312,7 @@ class DRQAgent:
         # set target entropy to -|A|
         self.target_entropy = -action_shape[0]
 
-        self.osl = OSL(self.critic, self.critic_target, action_shape[0]).to(self.device)
+        self.ksl = ksl(self.critic, self.critic_target, action_shape[0]).to(self.device)
 
         # optimizers
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
@@ -321,7 +321,7 @@ class DRQAgent:
 
         self.log_alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=lr)
 
-        self.osl_optimizer = torch.optim.Adam(self.osl.parameters(), lr=1e-4)
+        self.ksl_optimizer = torch.optim.Adam(self.ksl.parameters(), lr=1e-4)
 
         self.encoder_optimizer = torch.optim.Adam(
             self.critic.encoder.parameters(), lr=lr
@@ -333,14 +333,14 @@ class DRQAgent:
 
         self.loss_fn = loss_fn
 
-        self.osl_loss_hist = []
+        self.ksl_loss_hist = []
 
     def train(self, training=True):
         self.training = training
         self.actor.train(training)
         self.critic.train(training)
         self.critic_target.train(training)
-        self.osl.train(training)
+        self.ksl.train(training)
 
     @property
     def alpha(self):
@@ -436,42 +436,42 @@ class DRQAgent:
         alpha_loss.backward()
         self.log_alpha_optimizer.step()
 
-    def update_osl_traj(self, replay_buffer):
-        self.osl.train(True)
+    def update_ksl_traj(self, replay_buffer):
+        self.ksl.train(True)
 
         obses, actions, obses_next, rewards = replay_buffer.sample_traj(self.batch_size, self.k)
 
         loss = 0
 
-        z_o = self.osl.encoder_online(obses[:, 0, :, :, :])
+        z_o = self.ksl.encoder_online(obses[:, 0, :, :, :])
 
         for i in range(self.k):
             # encoded
-            z_m = self.osl.encoder_momentum(obses_next[:, i, :, :, :]).detach()
+            z_m = self.ksl.encoder_momentum(obses_next[:, i, :, :, :]).detach()
 
             # transition model
-            z_o = self.osl.transition(z_o, actions[:, i])
+            z_o = self.ksl.transition(z_o, actions[:, i])
 
             # reward prediction
-            # r_hat = self.osl.Wr(z_o)
+            # r_hat = self.ksl.Wr(z_o)
 
             # # projections
-            z_bar_o = self.osl.proj_online(z_o)
-            z_bar_m = self.osl.proj_momentum(z_m).detach()
+            z_bar_o = self.ksl.proj_online(z_o)
+            z_bar_m = self.ksl.proj_momentum(z_m).detach()
 
             # prediction
-            z_hat_o = self.osl.predict(z_bar_o)
+            z_hat_o = self.ksl.predict(z_bar_o)
 
             loss += self.loss_fn(z_hat_o, z_bar_m).mean()
 
-        self.osl_loss_hist.append(loss.item())
+        self.ksl_loss_hist.append(loss.item())
 
-        self.osl_optimizer.zero_grad()
+        self.ksl_optimizer.zero_grad()
         self.encoder_optimizer.zero_grad()
 
         loss.backward()
 
-        self.osl_optimizer.step()
+        self.ksl_optimizer.step()
         self.encoder_optimizer.step()
 
     def update(self, replay_buffer, logger, step):
@@ -483,8 +483,8 @@ class DRQAgent:
         self.update_critic(obs, obs_aug, action, reward, next_obs,
                            next_obs_aug, not_done, logger, step)
 
-        if step % self.osl_update_frequency == 0:
-            self.update_osl_traj(replay_buffer)
+        if step % self.ksl_update_frequency == 0:
+            self.update_ksl_traj(replay_buffer)
 
         if step % self.actor_update_frequency == 0:
             self.update_actor_and_alpha(obs, logger, step)
@@ -494,9 +494,9 @@ class DRQAgent:
                                      0.01)
             utils.soft_update_params(self.critic.Q2, self.critic_target.Q2,
                                      0.01)
-            utils.soft_update_params(self.osl.proj_online, self.osl.proj_momentum,
+            utils.soft_update_params(self.ksl.proj_online, self.ksl.proj_momentum,
                                      0.05)
-            utils.soft_update_params(self.osl.encoder_online, self.osl.encoder_momentum,
+            utils.soft_update_params(self.ksl.encoder_online, self.ksl.encoder_momentum,
                                      0.05)
 
     def get_gradients(self):
@@ -509,7 +509,7 @@ class DRQAgent:
 
         ksl_m = []
         ksl_v = []
-        for layer in self.osl_optimizer.state_dict()['state'].items():
+        for layer in self.ksl_optimizer.state_dict()['state'].items():
             ksl_m.append(layer[1]['exp_avg'].cpu().clone().detach())
             ksl_v.append(layer[1]['exp_avg_sq'].cpu().clone().detach())
 
@@ -526,7 +526,7 @@ class DRQAgent:
         )
 
         torch.save(
-            self.osl.state_dict(), dir + extras + '_osl.pt'
+            self.ksl.state_dict(), dir + extras + '_ksl.pt'
         )
 
     def load(self, dir, extras):
@@ -538,6 +538,6 @@ class DRQAgent:
             torch.load(dir + extras + '_critic.pt')
         )
 
-        self.osl.load_state_dict(
-            torch.load(dir + extras + '_osl.pt')
+        self.ksl.load_state_dict(
+            torch.load(dir + extras + '_ksl.pt')
         )
