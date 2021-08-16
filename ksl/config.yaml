@@ -36,7 +36,7 @@ p: false
 # agent configuration
 agent:
   name: osl
-  class: osl.DRQAgent
+  class: osl.KSLAgent
   params:
     obs_shape: ??? # to be specified later
     action_shape: ??? # to be specified later

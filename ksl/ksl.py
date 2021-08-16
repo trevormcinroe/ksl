@@ -281,8 +281,8 @@ class ksl(nn.Module):
         return z_hat
 
 
-class DRQAgent:
-    """Data regularized Q: actor-critic method for learning from pixels."""
+class KSLAgent:
+    """k-Step Latent Agent"""
     def __init__(self, obs_shape, action_shape, action_range, device,
                  encoder_cfg, critic_cfg, actor_cfg, discount,
                  init_temperature, lr, actor_update_frequency, critic_tau,
