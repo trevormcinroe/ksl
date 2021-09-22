@@ -247,7 +247,8 @@ class ProjectionHead(nn.Module):
             x = layer(x)
         return x
 
-class ksl(nn.Module):
+
+class KSL(nn.Module):
     def __init__(self, critic_online, critic_momentum, action_shape):
         super().__init__()
         self.encoder_online = critic_online.encoder
@@ -309,10 +310,11 @@ class KSLAgent:
 
         self.log_alpha = torch.tensor(np.log(init_temperature)).to(device)
         self.log_alpha.requires_grad = True
+
         # set target entropy to -|A|
         self.target_entropy = -action_shape[0]
 
-        self.ksl = ksl(self.critic, self.critic_target, action_shape[0]).to(self.device)
+        self.ksl = KSL(self.critic, self.critic_target, action_shape[0]).to(self.device)
 
         # optimizers
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
@@ -321,7 +323,7 @@ class KSLAgent:
 
         self.log_alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=lr)
 
-        self.ksl_optimizer = torch.optim.Adam(self.ksl.parameters(), lr=1e-4)
+        self.ksl_optimizer = torch.optim.Adam(self.ksl.parameters(), lr=lr)
 
         self.encoder_optimizer = torch.optim.Adam(
             self.critic.encoder.parameters(), lr=lr
@@ -446,20 +448,13 @@ class KSLAgent:
         z_o = self.ksl.encoder_online(obses[:, 0, :, :, :])
 
         for i in range(self.k):
-            # encoded
             z_m = self.ksl.encoder_momentum(obses_next[:, i, :, :, :]).detach()
 
-            # transition model
             z_o = self.ksl.transition(z_o, actions[:, i])
 
-            # reward prediction
-            # r_hat = self.ksl.Wr(z_o)
-
-            # # projections
             z_bar_o = self.ksl.proj_online(z_o)
             z_bar_m = self.ksl.proj_momentum(z_m).detach()
 
-            # prediction
             z_hat_o = self.ksl.predict(z_bar_o)
 
             loss += self.loss_fn(z_hat_o, z_bar_m).mean()
@@ -498,23 +493,6 @@ class KSLAgent:
                                      0.05)
             utils.soft_update_params(self.ksl.encoder_online, self.ksl.encoder_momentum,
                                      0.05)
-
-    def get_gradients(self):
-        # gathering m, v
-        rl_m = []
-        rl_v = []
-        for layer in self.critic_optimizer.state_dict()['state'].items():
-            rl_m.append(layer[1]['exp_avg'].cpu().clone().detach())
-            rl_v.append(layer[1]['exp_avg_sq'].cpu().clone().detach())
-
-        ksl_m = []
-        ksl_v = []
-        for layer in self.ksl_optimizer.state_dict()['state'].items():
-            ksl_m.append(layer[1]['exp_avg'].cpu().clone().detach())
-            ksl_v.append(layer[1]['exp_avg_sq'].cpu().clone().detach())
-
-        return rl_m, rl_v, ksl_m, ksl_v
-
 
     def save(self, dir, extras):
         torch.save(

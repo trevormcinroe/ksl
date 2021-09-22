@@ -12,7 +12,6 @@ import utils
 from logger import Logger
 from replay_buffer import ReplayBuffer
 from video import VideoRecorder
-from tqdm import tqdm
 
 torch.backends.cudnn.benchmark = True
 
@@ -129,25 +128,6 @@ class Workspace(object):
 
         return average_episode_reward, sd_episode_reward
 
-    def evaluate_gather_grads(self):
-        """Need to gather the gradients of the RL task and KSL task"""
-        if len(self.replay_buffer) < 500:
-            return
-
-        rl_m, rl_v, ksl_m, ksl_v = self.agent.get_gradients(self.replay_buffer)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_m-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(rl_m, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_v-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(rl_v, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_m-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(ksl_m, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_v-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(ksl_v, f)
-
     def run(self):
         print(f'Eval freq: {self.cfg.eval_frequency}')
         print(f'k: {self.agent.k}')
@@ -174,24 +154,13 @@ class Workspace(object):
                     means, sds = self.evaluate()
                     eval_mean.append(means)
 
-                    print(f'OSL: {np.mean(self.agent.osl_loss_hist[-20000:])}')
-                    print(f'R: {np.mean(self.agent.r_loss_hist[-20000:])}')
-
-                    # print(f'Saving {(self.step * self.cfg.action_repeat) / 1000}k agent')
-                    # torch.save(
-                    #     self.agent.critic.encoder.state_dict(),
-                    #     f'<ENTER/LOCATION/HERE>/ksl-optim-encoder-{(self.step * self.cfg.action_repeat) / 1000}k.pt'
-                    # )
-
-                    self.evaluate_gather_grads()
-
                 self.logger.log('train/episode_reward', episode_reward,
                                 self.step)
 
                 obs = self.env.reset()
                 done = False
                 episode_reward = 0
-                # TODO: at the very top, episode_step is init to 1 but here it is 0...
+
                 episode_step = 0
                 episode += 1
 
@@ -215,7 +184,6 @@ class Workspace(object):
             next_obs, reward, done, info = self.env.step(action)
 
             # allow infinite bootstrap
-            # TODO: shouldn't DONE always be 0? replay buffer is NOT DONE when adding...
             done = float(done)
             done_no_max = 0 if episode_step + 1 == self.env._max_episode_steps else done
             episode_reward += reward
@@ -247,7 +215,6 @@ def main(cfg):
 
     workspace = W(cfg)
     workspace.run()
-
 
 if __name__ == '__main__':
     main()

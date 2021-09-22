@@ -5,6 +5,9 @@ Implementation of k-Step Latent (KSL) in PyTorch.
 
 [Paper]
 
+![PlaNet Benchmark](figs/main_results.svg)
+
+
 Code is built on top of  the [DrQ](https://github.com/denisyarats/drq) repo from Denis Yarats.
 
 
