@@ -12,7 +12,6 @@ import utils
 from logger import Logger
 from replay_buffer import ReplayBuffer
 from video import VideoRecorder
-from tqdm import tqdm
 
 torch.backends.cudnn.benchmark = True
 
@@ -129,37 +128,6 @@ class Workspace(object):
 
         return average_episode_reward, sd_episode_reward
 
-    def evaluate_gather_grads(self):
-        """Need to gather the gradients of the RL task and KSL task"""
-        if len(self.replay_buffer) < 500:
-            return
-
-        rl_grads_outer = []
-        ksl_grads_outer = []
-
-        for _ in range(1):
-            rl_grads, ksl_grads, rl_m, rl_v, ksl_m, ksl_v = self.agent.get_gradients(self.replay_buffer)
-            rl_grads_outer.append(rl_grads)
-            ksl_grads_outer.append(ksl_grads)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_grads-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(rl_grads_outer, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_grads-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(ksl_grads_outer, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_m-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(rl_m, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_v-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(rl_v, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_m-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(ksl_m, f)
-
-        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_v-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
-            pickle.dump(ksl_v, f)
-
     def run(self):
         print(f'Eval freq: {self.cfg.eval_frequency}')
         print(f'k: {self.agent.k}')
@@ -186,22 +154,13 @@ class Workspace(object):
                     means, sds = self.evaluate()
                     eval_mean.append(means)
 
-                    print(f'KSL: {np.mean(self.agent.ksl_loss_hist[-20000:])}')
-
-                    # print(f'Saving {(self.step * self.cfg.action_repeat) / 1000}k agent')
-                    # torch.save(
-                    #     self.agent.critic.encoder.state_dict(),
-                    #     f'<ENTER/LOCATION/HERE>/ksl-optim-encoder-{(self.step * self.cfg.action_repeat) / 1000}k.pt'
-                    # )
-
-                    self.evaluate_gather_grads()
-
                 self.logger.log('train/episode_reward', episode_reward,
                                 self.step)
 
                 obs = self.env.reset()
                 done = False
                 episode_reward = 0
+
                 episode_step = 0
                 episode += 1
 
@@ -214,7 +173,7 @@ class Workspace(object):
                 with utils.eval_mode(self.agent):
                     action = self.agent.act(obs, sample=True)
 
-            self.agent.ksl.train(True)
+            self.agent.osl.train(True)
 
             # run training update
             if self.step >= self.cfg.num_seed_steps:
@@ -256,7 +215,6 @@ def main(cfg):
 
     workspace = W(cfg)
     workspace.run()
-
 
 if __name__ == '__main__':
     main()

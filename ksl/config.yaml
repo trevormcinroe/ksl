@@ -6,6 +6,7 @@ env: cartpole_swingup
 # See the 2nd paragraph in Appendix C of SLAC: https://arxiv.org/pdf/1907.00953.pdf
 # See Dreamer TF2's implementation: https://github.com/danijar/dreamer/blob/02f0210f5991c7710826ca7881f19c64a012290c/dreamer.py#L340
 action_repeat: 8
+
 # train
 num_train_steps: 500000
 num_train_iters: 1
@@ -13,13 +14,14 @@ num_seed_steps: 1000
 replay_buffer_capacity: 100000
 seed: 1
 # eval
-eval_frequency: 20000
+eval_frequency: 2500
 num_eval_episodes: 10
 # misc
 log_frequency_step: 10000
-log_save_tb: true
-save_video: true
+log_save_tb: false
+save_video: false
 device: cuda
+
 # observation
 image_size: 84
 image_pad: 4
@@ -27,11 +29,11 @@ frame_stack: 3
 # global params
 lr: 1e-3
 
-# IMPORTANT: please use a batch size of 512 to reproduce the results in the paper. However, with a smaller batch size it still works well.
 batch_size: 128
 
 # experiment name
 p: false
+
 # agent configuration
 agent:
   name: ksl
