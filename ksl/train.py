@@ -134,7 +134,19 @@ class Workspace(object):
         if len(self.replay_buffer) < 500:
             return
 
-        rl_m, rl_v, ksl_m, ksl_v = self.agent.get_gradients(self.replay_buffer)
+        rl_grads_outer = []
+        ksl_grads_outer = []
+
+        for _ in range(1):
+            rl_grads, ksl_grads, rl_m, rl_v, ksl_m, ksl_v = self.agent.get_gradients(self.replay_buffer)
+            rl_grads_outer.append(rl_grads)
+            ksl_grads_outer.append(ksl_grads)
+
+        with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_grads-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
+            pickle.dump(rl_grads_outer, f)
+
+        with open(f'<ENTER/LOCATION/HERE>/sep_optim-ksl_grads-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
+            pickle.dump(ksl_grads_outer, f)
 
         with open(f'<ENTER/LOCATION/HERE>/sep_optim-rl_m-{self.cfg.env}-{self.cfg.seed}-{self.step}.data', 'wb') as f:
             pickle.dump(rl_m, f)
@@ -174,8 +186,7 @@ class Workspace(object):
                     means, sds = self.evaluate()
                     eval_mean.append(means)
 
-                    print(f'OSL: {np.mean(self.agent.osl_loss_hist[-20000:])}')
-                    print(f'R: {np.mean(self.agent.r_loss_hist[-20000:])}')
+                    print(f'KSL: {np.mean(self.agent.ksl_loss_hist[-20000:])}')
 
                     # print(f'Saving {(self.step * self.cfg.action_repeat) / 1000}k agent')
                     # torch.save(
@@ -191,7 +202,6 @@ class Workspace(object):
                 obs = self.env.reset()
                 done = False
                 episode_reward = 0
-                # TODO: at the very top, episode_step is init to 1 but here it is 0...
                 episode_step = 0
                 episode += 1
 
@@ -204,7 +214,7 @@ class Workspace(object):
                 with utils.eval_mode(self.agent):
                     action = self.agent.act(obs, sample=True)
 
-            self.agent.osl.train(True)
+            self.agent.ksl.train(True)
 
             # run training update
             if self.step >= self.cfg.num_seed_steps:
@@ -215,7 +225,6 @@ class Workspace(object):
             next_obs, reward, done, info = self.env.step(action)
 
             # allow infinite bootstrap
-            # TODO: shouldn't DONE always be 0? replay buffer is NOT DONE when adding...
             done = float(done)
             done_no_max = 0 if episode_step + 1 == self.env._max_episode_steps else done
             episode_reward += reward
