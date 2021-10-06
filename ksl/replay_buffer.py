@@ -66,7 +66,8 @@ class ReplayBuffer(object):
         not_dones_no_max = torch.as_tensor(self.not_dones_no_max[idxs],
                                            device=self.device)
 
-        # KEEP UBCOMMENTED FOR TRANSLATION
+        # KEEP UNCOMMENTED FOR TRANSLATION
+        # For ablations with no augmentation, *comment out* the following lines
         obses = self.aug_trans(obses)
         next_obses = self.aug_trans(next_obses)
 
@@ -96,7 +97,7 @@ class ReplayBuffer(object):
 
         actions = np.array([self.actions[traj_idxs[i]] for i in range(batch_size)])
 
-        # KEEP UBCOMMENTED FOR TRANSLATION
+        # KEEP UNCOMMENTED FOR TRANSLATION
         obses = np.array([
             random_crop(self.obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
         ])
@@ -104,6 +105,7 @@ class ReplayBuffer(object):
             random_crop(self.next_obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
         ])
 
+        # For ablations with no augmentation, *uncomment* the following lines
         # obses = np.array([
         #     self.obses[traj_idxs[i]] for i in range(batch_size)
         # ])
