@@ -102,7 +102,7 @@ class Actor(nn.Module):
                                2 * action_shape[0], hidden_depth)
 
         self.outputs = dict()
-        self.apply(utils.weight_init)
+
 
     def forward(self, obs, detach_encoder=False):
         obs = self.encoder(obs, detach=detach_encoder)
@@ -163,7 +163,6 @@ class Critic(nn.Module):
                             hidden_dim, 1, hidden_depth)
 
         self.outputs = dict()
-        self.apply(utils.weight_init)
 
     def forward(self, obs, action, detach_encoder=False):
         assert obs.size(0) == action.size(0)
@@ -212,8 +211,6 @@ class DenseTrans(nn.Module):
             nn.Linear(512, 50)
         ])
 
-        self.apply(utils.weight_init)
-
     def forward(self, h, a):
         h = torch.cat([h, a], dim=-1)
 
@@ -239,8 +236,6 @@ class ProjectionHead(nn.Module):
             nn.Dropout(DROPOUT_FC),
             nn.Linear(512, 50),
         ])
-
-        self.apply(utils.weight_init)
 
     def forward(self, x):
         for layer in self.proj_head:
