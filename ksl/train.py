@@ -132,6 +132,7 @@ class Workspace(object):
         print(f'Eval freq: {self.cfg.eval_frequency}')
         print(f'k: {self.agent.k}')
         print(f'lr: {self.cfg.lr}')
+        print(f'Agent: {self.agent.name}')
 
         episode, episode_reward, episode_step, done = 0, 0, 1, True
         start_time = time.time()
@@ -200,12 +201,12 @@ class Workspace(object):
             episode_step += 1
             self.step += 1
 
-        with open(f'<ENTER/LOCATION/HERE>/ksl-optim-r-{self.cfg.env}-s{self.cfg.seed}-b{self.cfg.batch_size}-k{self.cfg.agent.params.k}-p{self.cfg.p}-mean.data', 'wb') as f:
+        with open(f'<ENTER/LOCATION/HERE>/{self.agent.name}-{self.cfg.env}-s{self.cfg.seed}-b{self.cfg.batch_size}-k{self.cfg.agent.params.k}-p{self.cfg.p}-mean.data', 'wb') as f:
             pickle.dump(eval_mean, f)
 
         self.agent.save(
             dir='<ENTER/LOCATION/HERE>',
-            extras=f'ksl-{self.cfg.env}-s{self.cfg.seed}-b{self.cfg.batch_size}-k{self.cfg.agent.params.k}-p{self.cfg.p}-500k'
+            extras=f'{self.cfg.agent}-{self.cfg.env}-s{self.cfg.seed}-b{self.cfg.batch_size}-k{self.cfg.agent.params.k}-p{self.cfg.p}-500k'
         )
 
 

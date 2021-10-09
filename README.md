@@ -24,8 +24,10 @@ This repo relies on environments from [DMControl](https://github.com/deepmind/dm
 
 From within  `./ksl`, simply run:
 ```
-python train.py
+python train.py agent=ksl.<AGENT-TYPE>
 ```
+
+where ```<AGENT-TYPE>``` is in ```[KSLAgent, DrQAgent, RADAgent]```.
 
 Altering training schemes can be done by feeding additional args, such as:
 ```

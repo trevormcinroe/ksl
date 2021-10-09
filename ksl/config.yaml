@@ -37,7 +37,7 @@ p: false
 # agent configuration
 agent:
   name: ksl
-  class: ksl.KSLAgent
+  class: ???
   params:
     obs_shape: ??? # to be specified later
     action_shape: ??? # to be specified later
@@ -50,7 +50,7 @@ agent:
     init_temperature: 0.1
     lr: ${lr}
     actor_update_frequency: 2
-    critic_tau: 0.05
+    critic_tau: 0.01
     critic_target_update_frequency: 2
     batch_size: ${batch_size}
     ksl_update_frequency: 1
