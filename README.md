@@ -3,7 +3,21 @@ Implementation of k-Step Latent (KSL) in PyTorch.
 
 **Representation Learning for Data-Efficient Reinforcement Learning**
 
-[Paper]
+[[Paper]](https://arxiv.org/abs/2110.04935)
+
+## Citation
+If you use this repo in your research, please consider citing the paper as follows
+```
+@misc{mcinroe2021learning,
+      title={Learning Temporally-Consistent Representations for Data-Efficient Reinforcement Learning}, 
+      author={Trevor McInroe and Lukas Schäfer and Stefano V. Albrecht},
+      year={2021},
+      eprint={2110.04935},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+```
+
 
 ![PlaNet Benchmark](./figs/main_results_bg.svg)
 
@@ -31,7 +45,7 @@ where ```<AGENT-TYPE>``` is in ```[KSLAgent, DrQAgent, RADAgent]```.
 
 Altering training schemes can be done by feeding additional args, such as:
 ```
-python train.py env=cheetah_run lr=2e-4
+python train.py action_repeat=8
 ```
 For a full list of customizable args, see `./ksl/configs.yaml`.
 
