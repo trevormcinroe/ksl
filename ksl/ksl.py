@@ -16,7 +16,9 @@ def loss_fn(x, y):
 
 
 class Encoder(nn.Module):
-	"""Convolutional encoder for image-based observations."""
+	"""
+
+	"""
 
 	def __init__(self, obs_shape, feature_dim):
 		super().__init__()
