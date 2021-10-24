@@ -28,10 +28,9 @@ image_pad: 4
 frame_stack: 3
 # global params
 lr: 1e-3
-
 batch_size: 128
 
-# experiment name
+# for pre-training ablation
 p: false
 
 # agent configuration

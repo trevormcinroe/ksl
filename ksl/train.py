@@ -56,7 +56,7 @@ def make_env(cfg):
     return env
 
 
-class Workspace(object):
+class Workspace:
     def __init__(self, cfg):
         self.work_dir = '<ENTER/LOCATION/HERE>'
         print(f'workspace: {self.work_dir}')
