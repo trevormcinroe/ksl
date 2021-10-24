@@ -9,6 +9,7 @@ import utils
 
 class ReplayBuffer:
     """Buffer to store environment transitions."""
+
     def __init__(self, obs_shape, action_shape, capacity, image_pad, device, env):
         self.capacity = capacity
         self.device = device
@@ -47,9 +48,9 @@ class ReplayBuffer:
         self.full = self.full or self.idx == 0
 
     def sample(self, batch_size):
-        idxs = np.random.randint(0,
-                                 self.capacity if self.full else self.idx,
-                                 size=batch_size)
+        idxs = np.random.randint(
+            0, self.capacity if self.full else self.idx, size=batch_size
+        )
 
         obses = self.obses[idxs]
         next_obses = self.next_obses[idxs]
@@ -59,12 +60,10 @@ class ReplayBuffer:
         obses = torch.as_tensor(obses, device=self.device).float()
         next_obses = torch.as_tensor(next_obses, device=self.device).float()
         obses_aug = torch.as_tensor(obses_aug, device=self.device).float()
-        next_obses_aug = torch.as_tensor(next_obses_aug,
-                                         device=self.device).float()
+        next_obses_aug = torch.as_tensor(next_obses_aug, device=self.device).float()
         actions = torch.as_tensor(self.actions[idxs], device=self.device)
         rewards = torch.as_tensor(self.rewards[idxs], device=self.device)
-        not_dones_no_max = torch.as_tensor(self.not_dones_no_max[idxs],
-                                           device=self.device)
+        not_dones_no_max = torch.as_tensor(self.not_dones_no_max[idxs], device=self.device)
 
         # KEEP UNCOMMENTED FOR TRANSLATION
         # For ablations with no augmentation, *comment out* the following lines
@@ -98,12 +97,16 @@ class ReplayBuffer:
         actions = np.array([self.actions[traj_idxs[i]] for i in range(batch_size)])
 
         # KEEP UNCOMMENTED FOR TRANSLATION
-        obses = np.array([
-            random_crop(self.obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
-        ])
-        obses_next = np.array([
-            random_crop(self.next_obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
-        ])
+        obses = np.array(
+            [
+                random_crop(self.obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
+            ]
+        )
+        obses_next = np.array(
+            [
+                random_crop(self.next_obses[traj_idxs[i]], self.image_pad) for i in range(batch_size)
+            ]
+        )
 
         # For ablations with no augmentation, *uncomment* the following lines
         # obses = np.array([
